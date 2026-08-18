@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.seed
+*.secrets
+*.secret
+secrets/
+
+# Build artifacts
+dist/
+build/
+coverage/
+.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Runtime / recordings
+recordings/
+stellarmind_demo*.mp4
+stellarmind_demo*.webp
+stellarmind_video_demo.mp4
+stellar_winning_demo_x402.mp4
+
+# MDs
+CLAUDE.md
+plan.md

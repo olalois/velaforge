@@ -1,0 +1,77 @@
+{
+  "name": "velaforge",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "demo": "node src/demo.js",
+    "preflight": "node src/demo-preflight.js",
+    "record:video": "node src/record-demo-video.js",
+    "voiceover": "node src/generate-demo-voiceover.js",
+    "record:narrated": "node src/render-narrated-demo.js",
+    "setup": "node src/setup-wallets.js",
+    "setup:usdc": "node src/setup-usdc.js",
+    "test": "node src/agents/settlement-header.test.js && node tests/orchestrator.budget.test.js && node tests/premium-endpoints.integration.test.js",
+    "test:validation": "node tests/api.validation.test.js",
+    "smoke": "node tests/smoke.test.js",
+    "lint": "eslint . --ext .js,.mjs,.cjs",
+    "lint:fix": "eslint . --ext .js,.mjs,.cjs --fix",
+    "lint:md": "markdownlint-cli2",
+    "lint:md:fix": "markdownlint-cli2 --fix",
+    "format": "prettier --write \"**/*.{js,md,html,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,md,html,yaml,yml}\"",
+    "test:parser": "node src/agents/settlement-header.test.js",
+    "test:budget": "node tests/orchestrator.budget.test.js",
+    "test:premium": "node tests/premium-endpoints.integration.test.js",
+    "test:demo": "node src/demo.js",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "stellar",
+    "x402",
+    "ai-agents",
+    "claude",
+    "micropayments",
+    "marketplace"
+  ],
+  "author": "VelaForge Team",
+  "license": "MIT",
+  "description": "VelaForge is an AI agent marketplace with x402 micropayments on Stellar — agents buy, sell, and earn autonomously.",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "@stellar/stellar-sdk": "^15.0.1",
+    "@x402/core": "^2.9.0",
+    "@x402/express": "^2.9.0",
+    "@x402/fetch": "^2.13.0",
+    "@x402/stellar": "^2.9.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.1.0",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "markdownlint-cli2": "^0.23.2",
+    "prettier": "^3.8.3"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": [
+      "eslint --fix --max-warnings=0",
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write",
+      "markdownlint-cli2 --fix"
+    ]
+  }
+}
