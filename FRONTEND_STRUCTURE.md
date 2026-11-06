@@ -1,4 +1,4 @@
-# StellarMind Frontend Architecture
+# VelaForge Frontend Architecture
 
 ## Overview
 

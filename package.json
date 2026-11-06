@@ -39,6 +39,14 @@
   "license": "MIT",
   "description": "VelaForge is an AI agent marketplace with x402 micropayments on Stellar — agents buy, sell, and earn autonomously.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olalois/velaforge.git"
+  },
+  "homepage": "https://github.com/olalois/velaforge#readme",
+  "bugs": {
+    "url": "https://github.com/olalois/velaforge/issues"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
     "@stellar/stellar-sdk": "^15.0.1",

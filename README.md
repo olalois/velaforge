@@ -15,7 +15,7 @@ VelaForge demonstrates a production-style pattern for agent commerce:
 - agents can call each other through paid APIs
 - payment is enforced by protocol (`x402`), not trust alone
 - spending is controlled with explicit budget policies
-- every paid step can be verified on-chain
+- settled steps expose on-chain proof when a transaction hash is available
 
 ## Core Capabilities
 
@@ -94,12 +94,13 @@ Security note:
 - `npm run setup` masks wallet secrets in terminal output by default.
 - Use `node src/setup-wallets.js --show-secrets` only when you explicitly need full secret printing.
 
-Add your Anthropic key:
+Add your Anthropic key to `.env` to enable live Claude agent calls. Without it, the app uses demo
+fallback responses. The optional `ADMIN_TOKEN` protects runtime API-key updates; configure it before
+exposing the server to a shared or public network.
 
 ```env
-| `ANTHROPIC_API_KEY` | `sk-ant-...` | Anthropic API key for Claude agents |
-| `ADMIN_TOKEN` | (optional) | Token required for runtime config changes (e.g. `POST /api/config/apikey`) |
-| `SERVER_STELLAR_ADDRESS` | `G...` | Public Key of the server wallet (receives payments) |
+ANTHROPIC_API_KEY=sk-ant-...
+ADMIN_TOKEN=replace-with-a-long-random-token
 ```
 
 Optional for deployments:
@@ -139,9 +140,10 @@ Open `http://localhost:3001`.
 
 > [!NOTE] **Mobile UI Limitations**: The dashboard is currently optimized for desktop viewports.
 > Mobile responsiveness improvements are planned (see
-> [#34](https://github.com/Flamki/stellarmind/issues/34)), but elements like the sidebar navigation
-> are currently hidden on screens narrower than 768px. For the best experience, we recommend using a
-> desktop browser with a viewport width of 1024px or wider during development and testing.
+> [GitHub Issues](https://github.com/olalois/velaforge/issues)), but elements like the sidebar
+> navigation are currently hidden on screens narrower than 768px. For the best experience, we
+> recommend using a desktop browser with a viewport width of 1024px or wider during development and
+> testing.
 
 Because `INTERNAL_BASE_URL` defaults to `http://localhost:$PORT`, local demo setup stays one-command
 simple: `npm run dev`.
@@ -189,7 +191,7 @@ The orchestrator uses `INTERNAL_BASE_URL` for its paid internal calls to `/api/p
 - Local development: leave `INTERNAL_BASE_URL` unset and run `npm run dev`
 - Single container / Docker Compose: set `INTERNAL_BASE_URL=http://<service-name>:3001`
 - Remote or reverse-proxied deployment: set `INTERNAL_BASE_URL` to the server origin the
-  orchestrator can actually reach, for example `https://stellarmind.example.com`
+  orchestrator can actually reach, for example `https://velaforge.example.com`
 
 Examples:
 
@@ -199,16 +201,16 @@ PORT=3001
 
 # Docker Compose
 PORT=3001
-INTERNAL_BASE_URL=http://stellarmind:3001
+INTERNAL_BASE_URL=http://your-service-name:3001
 
 # Remote deployment behind HTTPS
 PORT=3001
-INTERNAL_BASE_URL=https://stellarmind.example.com
+INTERNAL_BASE_URL=https://velaforge.example.com
 ```
 
 ## Operational Health Checks
 
-StellarMind exposes lightweight endpoints for deployment tooling and load balancer probes:
+VelaForge exposes lightweight endpoints for deployment tooling and load balancer probes:
 
 - `GET /healthz`
   - returns `200` and `status: ok` when the process is alive
@@ -246,7 +248,7 @@ Example `/readyz` response:
 
 ## Audit Run History
 
-StellarMind persists orchestration and payment audit history.
+VelaForge persists orchestration and payment audit history.
 
 - `GET /api/runs?limit=20`
   - returns recent runs across restarts when `RUN_HISTORY_STORAGE=file`
@@ -366,8 +368,8 @@ MIT. See [LICENSE](LICENSE).
 ### Quick Start
 
 ```bash
-git clone https://github.com/Flamki/stellarmind.git
-cd stellarmind
+git clone https://github.com/olalois/velaforge.git
+cd velaforge
 # Follow instructions above
 ```
 
