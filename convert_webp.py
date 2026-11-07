@@ -2,8 +2,8 @@ from PIL import Image
 import cv2
 import numpy as np
 
-input_path = r"C:\Users\bbook\.gemini\antigravity\brain\5490372b-b9a8-4ed5-9246-dc7f6c164b64\stellarmind_fixed_x402_1776010909176.webp"
-output_path = r"C:\Users\bbook\Desktop\stellar\stellarmind_fixed_demo.mp4"
+input_path = "velaforge_fixed_x402.webp"
+output_path = "velaforge_fixed_demo.mp4"
 
 print("Opening WebP...")
 img = Image.open(input_path)
@@ -17,7 +17,6 @@ try:
         # Background is black/dark blue for the UI, so RGBA to RGB is fine
         frame = img.copy().convert("RGB")
         img_np = np.array(frame)
-        
         # OpenCV uses BGR instead of RGB
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
         frames.append(img_bgr)

@@ -1,6 +1,6 @@
-# StellarMind Architecture
+# VelaForge Architecture
 
-This document gives a standalone, at-a-glance view of how StellarMind is put together: the runtime
+This document gives a standalone, at-a-glance view of how VelaForge is put together: the runtime
 components, and the three flows that matter most — **request**, **payment**, and **orchestration**.
 
 It complements the high-level summary in the [README](../README.md) and the design rationale in
@@ -9,10 +9,11 @@ It complements the high-level summary in the [README](../README.md) and the desi
 
 ## At a Glance
 
-StellarMind is a single Express service that exposes a marketplace of Claude-powered AI agents.
+VelaForge is a single Express service that exposes a marketplace of Claude-powered AI agents.
 Premium agent endpoints are protected by the [`x402`](https://www.x402.org) payment protocol, an
-orchestrator decomposes tasks and hires agents under a spending budget, and every paid step settles
-as a real, verifiable transaction on the Stellar testnet.
+orchestrator decomposes tasks and hires agents under a spending budget. Successful payments can be
+verified on Stellar when a transaction hash is available; demo-mode agent responses are not evidence
+of a settled payment.
 
 ```text
                          ┌──────────────────────────────────────┐
@@ -103,9 +104,8 @@ Browser / Client                       Express app (src/server.js)
 
 Notes:
 
-- The x402 paywall middleware only guards `/api/premium/*`; all other routes are free. If
-  `SERVER_STELLAR_ADDRESS` is unset, the paywall is disabled and premium endpoints respond without
-  payment (useful for local demos).
+- The x402 paywall middleware only guards `/api/premium/*`; those endpoints return `503` whenever
+  payment processing is not configured and ready. Other agent endpoints are intentionally free.
 - `/api/orchestrate` and `/api/config/apikey` sit behind in-memory fixed-window rate limiters
   ([`rateLimiter.js`](../src/middleware/rateLimiter.js)).
 - `GET /api/events` is the SSE hub: the orchestrator and premium routes `broadcast()` live events
@@ -113,9 +113,10 @@ Notes:
 
 ## Payment Flow
 
-How a paid premium call is settled with x402. This is the `402 → sign → settle → 200` path; if x402
-is unavailable, the orchestrator falls back to a direct XLM transfer that is still a real on-chain
-transaction.
+How a paid premium call is settled with x402. This is the `402 → sign → settle → 200` path. If no
+x402 client is configured, the orchestrator attempts a direct XLM transfer and only runs the local
+agent after that transfer succeeds. Ambiguous x402 request errors fail closed rather than risking a
+second payment.
 
 ```text
 Caller (orchestrator x402Fetch — @x402/fetch + ExactStellarScheme + Ed25519 signer)
@@ -143,9 +144,9 @@ settlement-header.js
    ▼
 Result: { result, paidVia: "x402", txHash, explorerUrl }
 
-   ┌─ Fallback path (x402 not configured, 4xx/5xx, or settlement failure) ──────────┐
+   ┌─ Fallback path (no x402 client configured) ────────────────────────────────────┐
    │  orchestrator → stellar/wallet.js sendPayment()  (direct XLM, Horizon testnet) │
-   │  → real on-chain tx → paidVia: "stellar-xlm-direct"                             │
+   │  → on successful submission, run local agent → paidVia: "stellar-xlm-direct"    │
    └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -156,8 +157,9 @@ Notes:
   drifts between layers.
 - The orchestrator's x402 client requires `ORCHESTRATOR_STELLAR_SECRET` plus a funded USDC
   trustline; readiness is checked at boot and surfaced via `x402WalletReady` / `x402WalletHint`.
-- A 200 without a decodable settlement header is treated as an _unverified_ success (flagged via a
-  `warning`), not a failure.
+- A 200 without a decodable settlement header is treated as an _unverified_ x402 success (flagged
+  via a `warning`); it does not provide a transaction hash or independently establish on-chain
+  verification.
 
 ## Orchestration Flow
 

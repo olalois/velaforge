@@ -1,9 +1,9 @@
 import assert from 'node:assert'
 import express from 'express'
 import { pricingConfig } from '../src/pricing.config.js'
-import { registerPremiumRoutes } from '../src/routes/premium-routes.js'
+import { registerPremiumRoutes, requireX402Ready } from '../src/routes/premium-routes.js'
 
-function createTestApp({ withPaymentHeaderRequired = true } = {}) {
+function createTestApp({ withPaymentHeaderRequired = true, x402Ready = true } = {}) {
   const app = express()
 
   // Mock payment middleware: block premium endpoints unless payment header exists.
@@ -19,6 +19,12 @@ function createTestApp({ withPaymentHeaderRequired = true } = {}) {
     }
     return next()
   })
+
+  // Block premium endpoints when x402 payment processing is unavailable.
+  app.use(
+    '/api/premium',
+    requireX402Ready(() => x402Ready)
+  )
 
   const calls = {
     research: 0,
@@ -70,6 +76,7 @@ async function withServer(app, fn) {
   })
   const { port } = server.address()
   const baseUrl = `http://127.0.0.1:${port}`
+
   try {
     await fn(baseUrl)
   } finally {
@@ -85,12 +92,14 @@ async function run() {
     '/api/premium/code?prompt=test-prompt',
   ]
 
-  // Without payment context => blocked by middleware
+  // Without payment context => blocked by payment middleware.
   {
     const { app, calls } = createTestApp()
+
     await withServer(app, async (baseUrl) => {
       for (const endpoint of endpoints) {
         const { status, body } = await requestJson(baseUrl, endpoint, false)
+
         assert.strictEqual(status, 402, `Expected 402 for ${endpoint} without payment context`)
         assert.strictEqual(
           body.error,
@@ -99,6 +108,7 @@ async function run() {
         )
       }
     })
+
     assert.deepStrictEqual(
       calls,
       { research: 0, summary: 0, analysis: 0, code: 0 },
@@ -106,9 +116,37 @@ async function run() {
     )
   }
 
-  // With payment context => premium handlers succeed
+  // When x402 is unavailable => blocked with 503.
+  {
+    const { app, calls } = createTestApp({
+      withPaymentHeaderRequired: false,
+      x402Ready: false,
+    })
+
+    await withServer(app, async (baseUrl) => {
+      for (const endpoint of endpoints) {
+        const { status, body } = await requestJson(baseUrl, endpoint)
+
+        assert.strictEqual(status, 503, `Expected 503 for ${endpoint} when x402 is unavailable`)
+        assert.strictEqual(
+          body.error,
+          'payment_service_unavailable',
+          `Expected payment_service_unavailable payload for ${endpoint}`
+        )
+      }
+    })
+
+    assert.deepStrictEqual(
+      calls,
+      { research: 0, summary: 0, analysis: 0, code: 0 },
+      'Agent handlers must not execute when x402 is unavailable'
+    )
+  }
+
+  // With payment context and x402 ready => premium handlers succeed.
   {
     const { app, calls } = createTestApp()
+
     await withServer(app, async (baseUrl) => {
       const research = await requestJson(baseUrl, '/api/premium/research?topic=my-topic', true)
       assert.strictEqual(research.status, 200)

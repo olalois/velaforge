@@ -2,8 +2,8 @@
 
 ## Overview
 
-Successfully refactored the Stellarmind API to externalize hardcoded pricing configuration, creating
-a centralized, validated pricing system that serves as a single source of truth for all premium
+Successfully refactored the VelaForge API to externalize hardcoded pricing configuration, creating a
+centralized, validated pricing system that serves as a single source of truth for all premium
 endpoint pricing.
 
 ## Problem Solved

@@ -223,6 +223,14 @@ async function callAgentViaX402(agent, input, broadcastFn, context = {}) {
         paymentMethod: 'x402',
         reason,
       })
+      return {
+        result: `x402 request failed with status ${response.status}; no fallback payment was attempted.`,
+        paymentMethod: 'none',
+        paymentSuccess: false,
+        paidVia: 'none',
+        txHash: null,
+        explorerUrl: null,
+      }
     } catch (err) {
       const reason = summarizeError(err)
       broadcastFn?.({
@@ -239,6 +247,45 @@ async function callAgentViaX402(agent, input, broadcastFn, context = {}) {
         paymentMethod: 'x402',
         reason,
       })
+      return {
+        result:
+          'x402 request failed; no fallback payment was attempted to avoid a possible double charge.',
+        paymentMethod: 'none',
+        paymentSuccess: false,
+        paidVia: 'none',
+        txHash: null,
+        explorerUrl: null,
+      }
+    }
+  }
+
+  let paymentResult = { success: false, txHash: null }
+  if (config.orchestratorSecret && config.serverAddress) {
+    try {
+      paymentResult = await sendPayment(
+        config.orchestratorSecret,
+        config.serverAddress,
+        parseFloat(agent.price).toFixed(2),
+        `pay:${agent.id}`
+      )
+    } catch (err) {
+      logger.error('xlm_fallback_payment_failed', {
+        correlationId: context.correlationId,
+        agentId: agent.id,
+        paymentMethod: 'stellar-xlm-direct',
+        error: err.message,
+      })
+    }
+  }
+
+  if (!paymentResult.success) {
+    return {
+      result: 'Agent execution skipped because direct Stellar payment could not be completed.',
+      paymentMethod: 'none',
+      paymentSuccess: false,
+      paidVia: 'none',
+      txHash: null,
+      explorerUrl: null,
     }
   }
 
@@ -262,25 +309,6 @@ async function callAgentViaX402(agent, input, broadcastFn, context = {}) {
     })
   } catch (err) {
     result = `Error: ${err.message}`
-  }
-
-  let paymentResult = { success: false, txHash: null }
-  if (config.orchestratorSecret && config.serverAddress) {
-    try {
-      paymentResult = await sendPayment(
-        config.orchestratorSecret,
-        config.serverAddress,
-        parseFloat(agent.price).toFixed(2),
-        `pay:${agent.id}`
-      )
-    } catch (err) {
-      logger.error('xlm_fallback_payment_failed', {
-        correlationId: context.correlationId,
-        agentId: agent.id,
-        paymentMethod: 'stellar-xlm-direct',
-        error: err.message,
-      })
-    }
   }
 
   const txHash = paymentResult.txHash || null

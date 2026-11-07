@@ -1,6 +1,6 @@
 # API Examples
 
-Request and response samples for every StellarMind API endpoint. Use these as a reference when
+Request and response samples for every VelaForge API endpoint. Use these as a reference when
 testing, developing, or integrating with the marketplace.
 
 > **Base URL:** `http://localhost:3001` (local dev) or your deployed origin.
@@ -126,8 +126,8 @@ curl -s http://localhost:3001/readyz | jq
     },
     "x402": {
       "enabled": true,
-      "ready": false,
-      "description": "x402 is enabled but middleware initialization failed"
+      "ready": true,
+      "description": "x402 payment middleware initialized"
     }
   }
 }
@@ -151,7 +151,7 @@ curl -s http://localhost:3001/api/status | jq
 
 ```json
 {
-  "name": "StellarMind",
+  "name": "VelaForge",
   "version": "1.0.0",
   "description": "AI Agent Marketplace with x402 Micropayments on Stellar",
   "status": "online",

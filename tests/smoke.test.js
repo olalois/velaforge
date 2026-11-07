@@ -9,9 +9,8 @@ const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url))
 const startupTimeoutMs = 20000
 const requestTimeoutMs = 5000
 
-// Startup pricing validation requires a non-empty payTo address. A placeholder
-// is fine here: x402 middleware init failures are caught by the server and the
-// smoke check only exercises unauthenticated endpoints.
+// Startup pricing validation requires a non-empty payTo address.
+// The placeholder allows the server to start without a real payment wallet.
 const child = spawn(process.execPath, [serverPath], {
   env: {
     ...process.env,
@@ -39,8 +38,7 @@ child.on('error', (err) => {
 })
 
 // Bounded requests: a route that accepts the connection but never responds
-// must fail the check (and print the server output) instead of hanging until
-// the job timeout cancels the run.
+// must fail the check instead of hanging until the job timeout cancels the run.
 function get(path) {
   return fetch(`${baseUrl}${path}`, { signal: AbortSignal.timeout(requestTimeoutMs) })
 }
@@ -68,6 +66,17 @@ async function main() {
   const health = await waitForHealthz()
   assert.strictEqual(health.status, 'ok', '/healthz should report status ok')
   console.log('PASS /healthz responds with status ok')
+
+  const readinessRes = await get('/readyz')
+  assert.strictEqual(readinessRes.status, 503)
+
+  const readiness = await readinessRes.json()
+  assert.strictEqual(readiness.ready, false)
+  assert.strictEqual(readiness.components.anthropic.configured, false)
+  assert.strictEqual(readiness.components.x402.enabled, true)
+  assert.strictEqual(readiness.components.x402.ready, true)
+
+  console.log('PASS /readyz correctly reports missing Anthropic configuration')
 
   const statusRes = await get('/api/status')
   assert.strictEqual(statusRes.status, 200, '/api/status should return 200')
