@@ -48,7 +48,7 @@
     "url": "https://github.com/olalois/velaforge/issues"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.98.0",
+    "@anthropic-ai/sdk": "^0.117.1",
     "@stellar/stellar-sdk": "^15.0.1",
     "@x402/core": "^2.9.0",
     "@x402/express": "^2.9.0",
